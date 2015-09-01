@@ -17,25 +17,67 @@
 #include "process.h"
 #include "shell.h"
 
+char* concat(char *s1, char *s2)
+{
+    char *result = malloc(strlen(s1)+strlen(s2)+1);//+1 for the zero-terminator
+    //in real code you would check for errors in malloc here
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
+}
+
 int cmd_quit(tok_t arg[]) {
   printf("Bye\n");
   exit(0);
   return 1;
 }
 
-int cmd_cd(tok_t arg[]) {
+int cmd_cd(tok_t arg[]) 
+{
   chdir (arg[0]);
   return 1;
 }
 
-int cmd_exec(tok_t arg[]) {
+char* spiltpath(tok_t arg[])
+{
+	tok_t *t;
+	int i;
+	char* path_name = getenv("PATH");
+	t = getToks(path_name);
+	char* new = NULL;
+ 	FILE * fp;
+
+	for (i = 0; i < MAXTOKS;i++)
+	{
+		new = concat(t[i],"/");
+		new = concat(new, arg[0]);
+	 
+		fp = fopen(new, "r");
+		if (fp == NULL)	
+			continue;
+		else
+
+			break;
+
+		fclose(fp);
+	}
+  
+
+   if (new == NULL)
+		return arg[0];
+
+   return new;
+}
+
+int cmd_exec(tok_t arg[]) 
+{
 	int parent_id;
 	char* path = arg[0];
-
 	parent_id = fork();
 
 	if(parent_id == 0)
 	{
+		path = spiltpath(arg);
 		execv(path, arg);
 		exit(0);
 	}
@@ -153,7 +195,7 @@ int shell (int argc, char *argv[]) {
 		cmd_exec(t);
       //fprintf(stdout, "This shell only supports built-ins. Replace this to run programs as commands.\n");
     }
-    fprintf(stdout, "%d %s: ", lineNum, get_current_dir_name());
+    fprintf(stdout, "%d %s: ", lineNum++, get_current_dir_name());
   }
   return 0;
 }
